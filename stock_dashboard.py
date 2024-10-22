@@ -108,6 +108,7 @@ else:
         )
 
         # Create a DataFrame to hold the ticker symbols and their corresponding weights
+        recommended_weights_percent = np.round(weights * 100, 2)
         weights_df = pd.DataFrame(
             {
                 "Ticker": [ticker.strip() for ticker in tickers],
