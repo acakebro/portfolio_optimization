@@ -4,6 +4,12 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Set the page configuration
+st.set_page_config(
+    page_title="Portfolio Optimizer",  # Change this to your desired title
+    page_icon="🪙",  # Optional: Change the icon (can be a string, e.g., emoji or a URL to an image)
+)
+
 # Streamlit configuration
 st.title("Stock Portfolio Risk and Returns Dashboard")
 
@@ -43,26 +49,41 @@ else:
     if weights is None:
         # Calculate expected returns and covariance matrix
         mean_returns = returns.mean() * 252  # Annualized mean returns
-        cov_matrix = returns.cov() * 252      # Annualized covariance matrix
-        
+        cov_matrix = returns.cov() * 252  # Annualized covariance matrix
+
         num_assets = len(tickers)
-        
+
         # Function to calculate portfolio Sharpe ratio
         def calculate_sharpe(weights):
             portfolio_return = np.dot(weights, mean_returns)
-            portfolio_volatility = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
-            return (portfolio_return - 0.02) / portfolio_volatility  # Assuming risk-free rate is 2%
+            portfolio_volatility = np.sqrt(
+                np.dot(weights.T, np.dot(cov_matrix, weights))
+            )
+            return (
+                portfolio_return - 0.02
+            ) / portfolio_volatility  # Assuming risk-free rate is 2%
 
         # Optimize weights for maximum Sharpe ratio
         from scipy.optimize import minimize
 
-        initial_weights = np.array(num_assets * [1. / num_assets])  # Start with equal weights
+        initial_weights = np.array(
+            num_assets * [1.0 / num_assets]
+        )  # Start with equal weights
 
-        constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})  # Weights must sum to 1
-        bounds = tuple((0, 1) for _ in range(num_assets))  # Weights must be between 0 and 1
+        constraints = {
+            "type": "eq",
+            "fun": lambda x: np.sum(x) - 1,
+        }  # Weights must sum to 1
+        bounds = tuple(
+            (0, 1) for _ in range(num_assets)
+        )  # Weights must be between 0 and 1
 
-        optimal_weights = minimize(lambda x: -calculate_sharpe(x), initial_weights, 
-                                   bounds=bounds, constraints=constraints)
+        optimal_weights = minimize(
+            lambda x: -calculate_sharpe(x),
+            initial_weights,
+            bounds=bounds,
+            constraints=constraints,
+        )
         weights = optimal_weights.x  # Assign the optimal weights
         # Convert to percentages and round for better readability
         recommended_weights_percent = np.round(weights * 100, 2)
@@ -87,15 +108,17 @@ else:
         )
 
         # Create a DataFrame to hold the ticker symbols and their corresponding weights
-        weights_df = pd.DataFrame({
-            'Ticker': [ticker.strip() for ticker in tickers],
-            'Recommended Weight (%)': recommended_weights_percent
-        })
+        weights_df = pd.DataFrame(
+            {
+                "Ticker": [ticker.strip() for ticker in tickers],
+                "Recommended Weight (%)": recommended_weights_percent,
+            }
+        )
 
         # Display recommended weights in a table format
         st.subheader("Recommended Portfolio Weights")
         st.table(weights_df)
-        
+
         # Calculate portfolio returns
         portfolio_returns = returns.dot(weights)
 
